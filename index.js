@@ -1,4 +1,5 @@
 import * as dotenv from 'dotenv'
+import { logger } from './utils/logger.js'
 import { Client, GatewayIntentBits, Partials, ActivityType, PresenceUpdateStatus } from 'discord.js'
 
 const { User, Channel, GuildMember, Message, Reaction } = Partials
@@ -21,7 +22,7 @@ const client = new Client({
 
 client
     .on('ready', () => {
-        console.log(`Logged in as ${client.user.tag}!`)
+        logger.info(`Logged in as ${client.user.tag}!`)
 
         const guildID = '1106467779885944952'
         const guild = client.guilds.cache.get(guildID)
@@ -55,4 +56,4 @@ client.on('interactionCreate', async (interaction) => {
     }
 })
 
-client.login(process.env.DISCORD_TOKEN).catch((error) => console.log(error))
+client.login(process.env.DISCORD_TOKEN).catch((error) => logger.error(error))
