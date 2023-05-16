@@ -1,10 +1,11 @@
 import * as dotenv from 'dotenv'
-import { logger } from './utils/logger.js'
-import { Client, GatewayIntentBits, Partials, ActivityType, PresenceUpdateStatus } from 'discord.js'
-import { joinVoiceChannel, getVoiceConnection, createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnectionStatus } from '@discordjs/voice'
 
 import { dirname } from 'path'
 import { fileURLToPath } from 'url'
+
+import { logger } from './utils/logger.js'
+import { Client, GatewayIntentBits, Partials, ActivityType, PresenceUpdateStatus } from 'discord.js'
+import { joinVoiceChannel, getVoiceConnection, createAudioPlayer, createAudioResource, AudioPlayerStatus, VoiceConnectionStatus } from '@discordjs/voice'
 
 const { User, Channel, GuildMember, Message, Reaction } = Partials
 const { Guilds, GuildMembers, GuildMessages, MessageContent, GuildVoiceStates } = GatewayIntentBits
@@ -24,8 +25,7 @@ const client = new Client({
     }
 })
 
-client
-    .on('ready', () => {
+client.on('ready', () => {
         logger.info(`Logged in as ${client.user.tag}!`)
 
         const guildID = '1106467779885944952'
@@ -38,19 +38,19 @@ client
         })
     })
 
-    .on('messageCreate', async (message) => {
+client.on('messageCreate', async (message) => {
         const messageContent = message.content.split(" ")
 
-        if (message.content === 'hello') {
-            message.channel.send(`Hey ${message.author.username}! how u doing bro?`)
-        }
+        if (message.content === '!voice') { 
+            let channels = message.guild.channels.cache
 
-        if ((messageContent[0] === '!join') && ((messageContent[1] !== undefined))) {
-            client.channels.fetch(messageContent[1])
-                .then(channel => {
-                     message.channel.send(`Entrando a: ${channel}`)
+            channels.forEach(channel => {
+                const voiceChannel = message.guild.channels.cache.get(channel.id)
 
-                     const connection = joinVoiceChannel({
+                if (voiceChannel.type === 2) {
+                    message.channel.send("Entrando al canal de voz")
+
+                    const connection = joinVoiceChannel({
                         channelId: channel.id,
                         guildId: channel.guild.id,
                         adapterCreator: channel.guild.voiceAdapterCreator,
@@ -58,11 +58,11 @@ client
                         selfDeaf: false
                     })
 
-                    connection.on(VoiceConnectionStatus.Ready, (oldState, newState) => {
-                        console.log('Connection is in the Ready state!');
+                    connection.on(VoiceConnectionStatus.Ready, () => {
+                        logger.info('Connection is in the Ready state!');
                     })
-                })
-                .catch(error => message.channel.send(`Error: ${error}`))
+                }
+            })
         }
 
         if (message.content === '!leave') {
@@ -84,16 +84,15 @@ client
             } else {
                 try {
                     message.channel.send("Reproduciendo sonido de prueba")
-
                     const player = createAudioPlayer()
+
                     const resource = createAudioResource(dirname(fileURLToPath(import.meta.url)) + '/test.mp3')
                     
                     connection.subscribe(player)
                     player.play(resource)   
 
                     player.on('error', error => logger.error(error))
-
-                    player.on(AudioPlayerStatus.Playing, () => console.log('Audio player is in the Playing state!'))
+                    player.on(AudioPlayerStatus.Playing, () => logger.log('Audio player is in the Playing state!'))
 
                 } catch (error) {
                     logger.log(error)
@@ -108,7 +107,6 @@ client.on('interactionCreate', async (interaction) => {
     }
 
     const { commandName, options } = interaction
-
     
     if (commandName == 'ping') {
         interaction.reply({
